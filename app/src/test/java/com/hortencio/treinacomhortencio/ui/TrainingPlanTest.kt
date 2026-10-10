@@ -108,4 +108,33 @@ class TrainingPlanTest {
         assertEquals(8, plan.durationMinutes)
         assertTrue(plan.exercises.all { it.prescription.contains("ritmo confortável") })
     }
+
+    @Test
+    fun mobilityDurationRespondsToEffortFeedbackButLowEnergyStaysGentle() {
+        val mobilityProfile = profile.copy(goal = TrainingGoal.MOBILITY)
+        val standardPlan = createWorkoutPlan(mobilityProfile, 15, EnergyLevel.STEADY)
+        val demandingPlan = createWorkoutPlan(
+            mobilityProfile,
+            15,
+            EnergyLevel.STEADY,
+            SessionFeedback.TOO_DEMANDING
+        )
+        val easyPlan = createWorkoutPlan(
+            mobilityProfile,
+            15,
+            EnergyLevel.STEADY,
+            SessionFeedback.COULD_DO_MORE
+        )
+        val lowEnergyPlan = createWorkoutPlan(
+            mobilityProfile,
+            15,
+            EnergyLevel.LOW,
+            SessionFeedback.COULD_DO_MORE
+        )
+
+        assertTrue(standardPlan.exercises.first().prescription.contains("40 segundos"))
+        assertTrue(demandingPlan.exercises.first().prescription.contains("30 segundos"))
+        assertTrue(easyPlan.exercises.first().prescription.contains("45 segundos"))
+        assertTrue(lowEnergyPlan.exercises.first().prescription.contains("30 segundos"))
+    }
 }

@@ -112,6 +112,12 @@ fun createWorkoutPlan(
         else -> baseRepetitions
     }
     val isMobility = gentleDay || profile.goal == TrainingGoal.MOBILITY
+    val mobilityDurationSeconds = when {
+        gentleDay -> 30
+        previousFeedback == SessionFeedback.TOO_DEMANDING -> 30
+        previousFeedback == SessionFeedback.COULD_DO_MORE -> 45
+        else -> 40
+    }
 
     return WorkoutPlan(
         title = if (gentleDay) "Movimento leve" else profile.goal.title(),
@@ -128,7 +134,7 @@ fun createWorkoutPlan(
                 id = template.id,
                 name = template.name,
                 prescription = when {
-                    isMobility -> "40 segundos · ritmo confortável"
+                    isMobility -> "$mobilityDurationSeconds segundos · ritmo confortável"
                     else -> "$rounds séries · $repetitions repetições"
                 },
                 instruction = template.instruction,

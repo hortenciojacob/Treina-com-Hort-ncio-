@@ -20,6 +20,7 @@ class TrainingPlanTest {
         assertEquals("Movimento leve", plan.title)
         assertEquals(8, plan.durationMinutes)
         assertEquals(2, plan.exercises.size)
+        assertTrue(plan.reason.contains("pouca energia"))
         assertTrue(plan.exercises.all { it.prescription.contains("confortável") })
     }
 
@@ -30,6 +31,7 @@ class TrainingPlanTest {
 
         assertEquals(2, shortPlan.exercises.size)
         assertEquals(5, longerPlan.exercises.size)
+        assertTrue(shortPlan.reason.contains("8 minutos"))
     }
 
     @Test
@@ -78,6 +80,7 @@ class TrainingPlanTest {
         )
 
         assertTrue(plan.exercises.first().prescription.contains("1 séries · 6 repetições"))
+        assertTrue(plan.reason.contains("foi exigente"))
     }
 
     @Test

@@ -159,6 +159,7 @@ class TrainingProfileStore(context: Context) {
             .put(KEY_DESCRIPTION, plan.description)
             .put(KEY_DURATION, plan.durationMinutes)
             .put(KEY_GOAL, plan.goal.name)
+            .put(KEY_REASON, plan.reason)
             .put(KEY_EXERCISES, exercisesJson)
             .put(KEY_COMPLETED_IDS, JSONArray().apply {
                 completedExerciseIds.forEach(::put)
@@ -207,6 +208,7 @@ class TrainingProfileStore(context: Context) {
                     durationMinutes = pausedJson.optInt(KEY_DURATION, 0),
                     goal = runCatching { TrainingGoal.valueOf(pausedJson.optString(KEY_GOAL)) }
                         .getOrDefault(TrainingGoal.STRENGTH),
+                    reason = pausedJson.optString(KEY_REASON),
                     exercises = exercises
                 ),
                 completedExerciseIds = completedIds.intersect(exercises.map { it.id }.toSet())
@@ -265,6 +267,7 @@ class TrainingProfileStore(context: Context) {
         const val KEY_FEEDBACK = "feedback"
         const val KEY_PAUSED_WORKOUT = "paused_workout"
         const val KEY_DESCRIPTION = "description"
+        const val KEY_REASON = "reason"
         const val KEY_DURATION = "duration"
         const val KEY_EXERCISES = "exercises"
         const val KEY_COMPLETED_IDS = "completed_ids"

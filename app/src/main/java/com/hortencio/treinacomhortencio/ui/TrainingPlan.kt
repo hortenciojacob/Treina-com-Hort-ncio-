@@ -55,6 +55,7 @@ data class WorkoutPlan(
     val description: String,
     val durationMinutes: Int,
     val goal: TrainingGoal,
+    val reason: String,
     val exercises: List<PlannedExercise>
 )
 
@@ -121,6 +122,7 @@ fun createWorkoutPlan(
         },
         durationMinutes = duration,
         goal = profile.goal,
+        reason = recommendationReason(profile, duration, energy, previousFeedback),
         exercises = templates.take(exerciseCount).map { template ->
             PlannedExercise(
                 id = template.id,
@@ -134,6 +136,26 @@ fun createWorkoutPlan(
             )
         }
     )
+}
+
+private fun recommendationReason(
+    profile: TrainingProfile,
+    duration: Int,
+    energy: EnergyLevel,
+    previousFeedback: SessionFeedback?
+) = when {
+    energy == EnergyLevel.LOW ->
+        "Escolheste pouca energia; hoje reduzimos a sessão a movimentos leves e curtos."
+    previousFeedback == SessionFeedback.TOO_DEMANDING ->
+        "A última sessão de ${profile.goal.title().lowercase()} foi exigente; baixámos a dose um passo."
+    previousFeedback == SessionFeedback.COULD_DO_MORE ->
+        "A última sessão de ${profile.goal.title().lowercase()} pareceu leve; aumentámos a dose gradualmente."
+    duration <= 10 ->
+        "Escolheste pouco tempo; reduzimos a lista para caber numa sessão de $duration minutos."
+    profile.goal == TrainingGoal.MOBILITY ->
+        "Escolheste mobilidade; o plano privilegia ritmo livre e amplitude confortável."
+    else ->
+        "Combinámos o teu objetivo, experiência e equipamento disponível para montar este treino."
 }
 
 private fun TrainingGoal.title() = when (this) {

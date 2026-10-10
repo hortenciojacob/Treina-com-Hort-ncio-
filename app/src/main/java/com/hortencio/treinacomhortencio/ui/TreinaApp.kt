@@ -417,6 +417,8 @@ private fun Dashboard(
                 }
                 Text(plan.title, style = MaterialTheme.typography.headlineMedium, color = Color.White, fontWeight = FontWeight.Bold)
                 Text(plan.description, style = MaterialTheme.typography.bodyMedium, color = Color(0xFFE1EEE6))
+                Text("PORQUÊ ESTA SUGESTÃO", style = MaterialTheme.typography.labelSmall, color = Color(0xFFB5D9C5), fontWeight = FontWeight.Bold)
+                Text(plan.reason, style = MaterialTheme.typography.bodySmall, color = Color(0xFFE1EEE6))
                 Text(
                     "${plan.exercises.size} movimentos · foco em ${profile.goal.label().lowercase(PortugueseLocale)}",
                     style = MaterialTheme.typography.bodySmall,

@@ -71,6 +71,70 @@ class TrainingPlanTest {
     }
 
     @Test
+    fun exerciseGuidesHaveSpecificCuesAndSafetyForKnownMoves() {
+        val squatGuide = exerciseGuideFor("squat")
+        val wallPushGuide = exerciseGuideFor("wall-push")
+        val wallPressGuide = exerciseGuideFor("wall-push", "Pressão na parede")
+        val gentleMarchGuide = exerciseGuideFor("easy-march")
+        val catCowGuide = exerciseGuideFor("cat-cow")
+        val fallbackGuide = exerciseGuideFor("unlisted")
+
+        assertTrue(squatGuide.focus.contains("Pernas"))
+        assertTrue(squatGuide.steps.first().contains("Pés"))
+        assertTrue(wallPushGuide.focus.contains("Peito"))
+        assertTrue(wallPushGuide.watchOut.contains("Afasta"))
+        assertTrue(wallPressGuide.steps.any { it.contains("mantém") })
+        assertTrue(gentleMarchGuide.focus.contains("suave"))
+        assertTrue(catCowGuide.steps.any { it.contains("Arredonda") })
+        assertTrue(fallbackGuide.steps.isNotEmpty())
+    }
+
+    @Test
+    fun noFloorPreferenceProducesStandingOrSeatedMovesAcrossEveryGoal() {
+        TrainingGoal.entries.forEach { goal ->
+            val adaptedProfile = profile.copy(
+                goal = goal,
+                hasBackpack = true,
+                prefersNoFloorExercises = true
+            )
+            val plan = createWorkoutPlan(adaptedProfile, 25, EnergyLevel.STEADY)
+
+            assertTrue(plan.reason.contains("sem exercícios no chão"))
+            plan.exercises.forEach { exercise ->
+                val movementText = listOfNotNull(
+                    exercise.name,
+                    exercise.instruction,
+                    exercise.alternative?.name,
+                    exercise.alternative?.instruction
+                ).joinToString(" ").lowercase()
+                assertTrue("Unexpected floor movement: $movementText", "chão" !in movementText)
+                assertTrue("Unexpected floor movement: $movementText", "deita" !in movementText)
+                assertTrue("Unexpected floor movement: $movementText", "quatro apoios" !in movementText)
+            }
+        }
+    }
+
+    @Test
+    fun noFloorPreferenceAlsoAdaptsTheMobilityGuideAndStrengthVariations() {
+        val profileWithoutFloor = profile.copy(prefersNoFloorExercises = true)
+        val strengthPlan = createWorkoutPlan(profileWithoutFloor, 25, EnergyLevel.STEADY)
+        val pull = strengthPlan.exercises.first { it.id == "pull" }
+        val core = strengthPlan.exercises.first { it.id == "dead-bug" }
+        val adaptedPull = exerciseGuideFor(pull.id, pull.name)
+        val adaptedCore = exerciseGuideFor(core.id, core.name)
+        val mobilityPlan = createWorkoutPlan(
+            profileWithoutFloor.copy(goal = TrainingGoal.MOBILITY),
+            25,
+            EnergyLevel.STEADY
+        )
+        val spine = mobilityPlan.exercises.first { it.id == "cat-cow" }
+
+        assertTrue(adaptedPull.focus.contains("sem ir ao chão"))
+        assertTrue(adaptedCore.focus.contains("em pé"))
+        assertTrue(exerciseGuideFor(spine.id, spine.name).focus.contains("em pé"))
+    }
+
+    @Test
     fun difficultFeedbackReducesTheNextStrengthDose() {
         val plan = createWorkoutPlan(
             profile,
@@ -107,6 +171,47 @@ class TrainingPlanTest {
         assertEquals("Movimento leve", plan.title)
         assertEquals(8, plan.durationMinutes)
         assertTrue(plan.exercises.all { it.prescription.contains("ritmo confortável") })
+    }
+
+    @Test
+    fun coachMessageReflectsEnergyAndConsistency() {
+        val message = coachMessage(profile, EnergyLevel.LOW, 12, 4)
+
+        assertTrue(message.contains("consistência"))
+        assertTrue(message.contains("respeito pelo corpo"))
+        assertTrue(message.contains("força"))
+    }
+
+    @Test
+    fun coachUsesRecentMoodWithoutJudgingTheUser() {
+        val message = coachMessage(profile, EnergyLevel.STEADY, 15, 1, SessionMood.EXHAUSTED)
+
+        assertTrue(message.contains("cansaço"))
+        assertTrue(message.contains("gentil"))
+    }
+
+    @Test
+    fun shortChallengeIsPersonalizedAndAlwaysEightMinutes() {
+        val challenge = shortChallengeFor(dayOfWeek = 3, goal = TrainingGoal.MOBILITY)
+
+        assertEquals("Pernas despertas", challenge.title)
+        assertTrue(challenge.prompt.contains("mobilidade confortável"))
+        assertTrue(challenge.encouragement.contains("Não é um teste"))
+    }
+
+    @Test
+    fun hydrationProgressStaysWithinBounds() {
+        assertEquals(0f, hydrationProgress(-100, 2000), 0.001f)
+        assertEquals(0.5f, hydrationProgress(1000, 2000), 0.001f)
+        assertEquals(1f, hydrationProgress(2500, 2000), 0.001f)
+    }
+
+    @Test
+    fun habitScoreRewardsConsistencyAndGoodMood() {
+        val score = habitScoreFor(completedSessions = 5, sessionsLastSevenDays = 5, streakDays = 3, recentMood = SessionMood.STRONG)
+
+        assertTrue(score > 70)
+        assertTrue(score <= 100)
     }
 
     @Test
